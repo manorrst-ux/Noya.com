@@ -1,0 +1,10 @@
+generator client { provider = "prisma-client-js" }
+
+datasource db { provider = "postgresql" url = env("DATABASE_URL") }
+
+model ContentIdea { id String @id @default(cuid()); title String; category String; score Float @default(0); status String @default("idea"); sourceUrls Json?; createdAt DateTime @default(now()); updatedAt DateTime @updatedAt; scripts Script[] }
+model Script { id String @id @default(cuid()); ideaId String; idea ContentIdea @relation(fields:[ideaId], references:[id], onDelete:Cascade); hook String; body String; cta String?; factCheck Json?; status String @default("draft"); createdAt DateTime @default(now()); assets Asset[] }
+model Asset { id String @id @default(cuid()); scriptId String; script Script @relation(fields:[scriptId], references:[id], onDelete:Cascade); kind String; provider String; url String?; status String @default("queued"); metadata Json?; createdAt DateTime @default(now()) }
+model Publication { id String @id @default(cuid()); scriptId String; youtubeVideoId String?; title String; description String; scheduledAt DateTime?; publishedAt DateTime?; status String @default("scheduled"); analytics Analytics?; createdAt DateTime @default(now()) }
+model Analytics { id String @id @default(cuid()); publicationId String @unique; publication Publication @relation(fields:[publicationId], references:[id], onDelete:Cascade); views Int @default(0); likes Int @default(0); comments Int @default(0); watchTimeSeconds Float @default(0); retention Float @default(0); capturedAt DateTime @default(now()) }
+model Integration { id String @id @default(cuid()); provider String @unique; accessTokenEncrypted String?; refreshTokenEncrypted String?; expiresAt DateTime?; metadata Json?; updatedAt DateTime @updatedAt }
