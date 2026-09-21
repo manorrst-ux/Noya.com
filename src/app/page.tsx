@@ -1,6 +1,6 @@
 "use client";
 
-import { useMemo, useState } from "react";
+import { useEffect, useMemo, useState } from "react";
 
 type Idea = {
   category: string;
@@ -30,6 +30,11 @@ export default function Home() {
   const [generating, setGenerating] = useState(false);
   const [category, setCategory] = useState("all");
   const [message, setMessage] = useState("Ready to generate");
+  const [youtubeConnected, setYoutubeConnected] = useState(false);
+
+  useEffect(() => {
+    fetch("/api/youtube/status").then((r) => r.json()).then((data) => setYoutubeConnected(Boolean(data.connected))).catch(() => setYoutubeConnected(false));
+  }, []);
 
   const visibleIdeas = useMemo(() => {
     if (category === "all") return ideas;
@@ -91,14 +96,14 @@ export default function Home() {
           <span className="tag">{categoryLabels[idea.category] ?? idea.category}</span>
           <div className="row"><strong>{idea.title}</strong><span className="muted">{idea.score.toFixed(1)}/10</span></div>
           <p className="muted">{idea.hook}</p><p className="muted">Why it scores: {idea.reason}</p>
-          <button className="button secondary" onClick={() => setMessage(`Draft queued: ${idea.title}`)}>Create draft</button>
+          <button className="button secondary" onClick={() => setMessage(`Draft prepared: ${idea.title}`)}>Create draft</button>
         </article>)}</div>
       </section>
 
       <section id="schedule" className="section"><div className="section-title">Publishing policy</div><div className="card"><div className="row"><strong>Daily Shorts</strong><span className="status">Configured</span></div><p className="muted">One original English Short per day, target publish time 20:00 Qatar. The scheduler should only publish videos that pass review and have valid YouTube credentials.</p></div></section>
 
       <section id="integrations" className="section"><div className="section-title">Integrations</div><div className="grid">
-        <div className="card"><strong>YouTube</strong><p className="muted">OAuth upload + analytics</p><span className="status">Code boundary ready</span></div>
+        <div className="card"><strong>YouTube</strong><p className="muted">OAuth upload + analytics</p>{youtubeConnected ? <span className="status">Connected</span> : <a className="button secondary" href="/api/youtube/auth">Connect YouTube</a>}</div>
         <div className="card"><strong>WordPress</strong><p className="muted">Dashboard + content sync</p><span className="status">Code boundary ready</span></div>
         <div className="card"><strong>AI</strong><p className="muted">Topic generation endpoint</p><span className="status">Live when key is configured</span></div>
         <div className="card"><strong>Scheduler</strong><p className="muted">Daily 20:00 Qatar workflow</p><span className="status">Cron configured</span></div>
