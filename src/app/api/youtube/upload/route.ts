@@ -34,6 +34,11 @@ async function getAccessToken() {
 
 export async function POST(request: Request) {
   try {
+    const env = getEnv();
+    if (request.headers.get("authorization") !== `Bearer ${env.CRON_SECRET}`) {
+      return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
+    }
+
     const form = await request.formData();
     const file = form.get("video");
     if (!(file instanceof File)) return NextResponse.json({ error: "video file is required" }, { status: 400 });
@@ -42,7 +47,13 @@ export async function POST(request: Request) {
     const title = String(form.get("title") ?? "Noya AI Short").slice(0, 100);
     const description = String(form.get("description") ?? "").slice(0, 5000);
     const requestedPrivacy = String(form.get("privacyStatus") ?? "private");
-    const privacyStatus = ["private", "public", "unlisted"].includes(requestedPrivacy) ? requestedPrivacy : "private";
+    if (requestedPrivacy !== "private") {
+      return NextResponse.json(
+        { error: "Only private uploads are enabled. Public or unlisted uploads require a separate explicit approval workflow." },
+        { status: 403 },
+      );
+    }
+    const privacyStatus = "private";
     const publishAtRaw = String(form.get("publishAt") ?? "");
     const status: Record<string, string> = { privacyStatus };
     if (privacyStatus === "private" && publishAtRaw) status.publishAt = new Date(publishAtRaw).toISOString();
