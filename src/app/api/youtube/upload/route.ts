@@ -34,8 +34,11 @@ async function getAccessToken() {
 
 export async function POST(request: Request) {
   try {
-    const env = getEnv();
-    if (request.headers.get("authorization") !== `Bearer ${env.CRON_SECRET}`) {
+    const cronSecret = process.env.CRON_SECRET;
+    if (!cronSecret) {
+      return NextResponse.json({ error: "Upload authorization is not configured" }, { status: 503 });
+    }
+    if (request.headers.get("authorization") !== `Bearer ${cronSecret}`) {
       return NextResponse.json({ error: "Unauthorized" }, { status: 401 });
     }
 
